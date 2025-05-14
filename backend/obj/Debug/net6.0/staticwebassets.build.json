@@ -1,0 +1,19 @@
+{
+  "Version": 1,
+  "Hash": "yoLU3xHMcJ+QFVTYYQFPWiiGgcVwTWz8LpWIh4HLUX4=",
+  "Source": "backend",
+  "BasePath": "_content/backend",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "backend\\wwwroot",
+      "Source": "backend",
+      "ContentRoot": "D:\\global\\final_project_vp\\backend\\wwwroot\\",
+      "BasePath": "_content/backend",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": []
+}
