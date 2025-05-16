@@ -17,9 +17,41 @@ namespace backend.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Создание начальных данных (опционально)
+            // Configure User entity
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.Property(e => e.Role).HasDefaultValue("Author");
+                entity.Property(e => e.IsBlocked).HasDefaultValue(false);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+
+            // Configure Article entity
+            modelBuilder.Entity<Article>(entity =>
+            {
+                entity.Property(e => e.Status).HasDefaultValue("Draft");
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+
+            // Configure Review entity
+            modelBuilder.Entity<Review>(entity =>
+            {
+                entity.Property(e => e.Status).HasDefaultValue("Pending");
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+
+            // Seed initial admin user
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, FirstName = "Admin", LastName = "Admin", Email = "admin@example.com", PasswordHash = "hashed_password", Role = "Admin" }
+                new User 
+                { 
+                    Id = 1, 
+                    FirstName = "Admin", 
+                    LastName = "Admin", 
+                    Email = "admin@example.com", 
+                    PasswordHash = "hashed_password", 
+                    Role = "Admin",
+                    CreatedAt = DateTime.UtcNow
+                }
             );
         }
     }

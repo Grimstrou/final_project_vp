@@ -40,44 +40,29 @@ namespace backend.Services
 
         public async Task<bool> AddReview(Review review)
         {
-            try
-            {
-                review.CreatedAt = DateTime.UtcNow;
-                await _context.Reviews.AddAsync(review);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            review.CreatedAt = DateTime.UtcNow;
+            await _context.Reviews.AddAsync(review);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        public async Task<bool> UpdateReviewStatus(int reviewId, string status)
+        public async Task<bool> UpdateReview(int reviewId, Action<Review> updateAction)
         {
             var review = await _context.Reviews.FindAsync(reviewId);
             if (review == null)
                 return false;
 
-            review.Status = status;
+            updateAction(review);
             review.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
         }
 
-        public async Task<bool> AcceptReviewRequest(int reviewId)
+        public async Task<bool> HandleReviewRequest(int reviewId, bool accept)
         {
-            var review = await _context.Reviews.FindAsync(reviewId);
-            if (review == null)
-                return false;
-
-            review.IsAccepted = true;
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> RejectReviewRequest(int reviewId)
-        {
+            if (accept)
+                return await UpdateReview(reviewId, review => review.IsAccepted = true);
+            
             var review = await _context.Reviews.FindAsync(reviewId);
             if (review == null)
                 return false;

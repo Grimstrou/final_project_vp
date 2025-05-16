@@ -33,22 +33,11 @@ namespace backend.Controllers
             return BadRequest("Failed to create user");
         }
 
-        [HttpPut("users/{id}/block")]
-        public async Task<ActionResult> BlockUser(int id)
+        [HttpPut("users/{id}")]
+        public async Task<ActionResult> UpdateUserStatus(int id, [FromBody] bool shouldDelete)
         {
-            var result = await _authService.BlockUser(id);
-            if (result)
-                return Ok();
-            return NotFound("User not found");
-        }
-
-        [HttpDelete("users/{id}")]
-        public async Task<ActionResult> DeleteUser(int id)
-        {
-            var result = await _authService.DeleteUser(id);
-            if (result)
-                return Ok();
-            return NotFound("User not found");
+            var result = await _authService.UpdateUserStatus(id, shouldDelete);
+            return HandleResult(result, "User not found");
         }
 
         [HttpGet("users/{id}")]
@@ -71,9 +60,12 @@ namespace backend.Controllers
         public async Task<ActionResult> DeleteArticle(int id)
         {
             var result = await _articleService.DeleteArticle(id);
-            if (result)
-                return Ok();
-            return NotFound("Article not found");
+            return HandleResult(result, "Article not found");
+        }
+
+        private ActionResult HandleResult(bool success, string errorMessage)
+        {
+            return success ? Ok() : NotFound(errorMessage);
         }
     }
 } 

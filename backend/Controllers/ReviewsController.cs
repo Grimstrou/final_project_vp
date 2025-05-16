@@ -50,28 +50,20 @@ namespace backend.Controllers
         [HttpPut("{id}/status")]
         public async Task<ActionResult> UpdateReviewStatus(int id, [FromBody] string status)
         {
-            var result = await _reviewService.UpdateReviewStatus(id, status);
-            if (result)
-                return Ok();
-            return NotFound("Review not found");
+            var result = await _reviewService.UpdateReview(id, review => review.Status = status);
+            return HandleResult(result, "Review not found");
         }
 
-        [HttpPut("{id}/accept")]
-        public async Task<ActionResult> AcceptReview(int id)
+        [HttpPut("{id}/handle")]
+        public async Task<ActionResult> HandleReview(int id, [FromBody] bool accept)
         {
-            var result = await _reviewService.AcceptReviewRequest(id);
-            if (result)
-                return Ok();
-            return NotFound("Review not found");
+            var result = await _reviewService.HandleReviewRequest(id, accept);
+            return HandleResult(result, "Review not found");
         }
 
-        [HttpPut("{id}/reject")]
-        public async Task<ActionResult> RejectReview(int id)
+        private ActionResult HandleResult(bool success, string errorMessage)
         {
-            var result = await _reviewService.RejectReviewRequest(id);
-            if (result)
-                return Ok();
-            return NotFound("Review not found");
+            return success ? Ok() : NotFound(errorMessage);
         }
     }
 }

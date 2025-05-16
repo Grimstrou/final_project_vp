@@ -50,19 +50,20 @@ namespace backend.Controllers
         [HttpPut("{id}/status")]
         public async Task<ActionResult> UpdateArticleStatus(int id, [FromBody] string status)
         {
-            var result = await _articleService.UpdateArticleStatus(id, status);
-            if (result)
-                return Ok();
-            return NotFound("Article not found");
+            var result = await _articleService.UpdateArticle(id, article => article.Status = status);
+            return HandleResult(result, "Article not found");
         }
 
         [HttpPut("{id}/reviewers")]
         public async Task<ActionResult> AssignReviewers(int id, [FromBody] List<int> reviewerIds)
         {
             var result = await _articleService.AssignReviewers(id, reviewerIds);
-            if (result)
-                return Ok();
-            return NotFound("Article not found");
+            return HandleResult(result, "Article not found");
+        }
+
+        private ActionResult HandleResult(bool success, string errorMessage)
+        {
+            return success ? Ok() : NotFound(errorMessage);
         }
     }
 }

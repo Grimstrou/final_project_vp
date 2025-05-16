@@ -8,6 +8,8 @@ namespace backend.Controllers
     public class FileController : ControllerBase
     {
         private readonly IWebHostEnvironment _environment;
+        private const string UPLOADS_FOLDER = "uploads";
+        private static readonly string[] ALLOWED_EXTENSIONS = { ".pdf", ".docx" };
 
         public FileController(IWebHostEnvironment environment)
         {
@@ -20,36 +22,27 @@ namespace backend.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded");
 
-            // Проверяем расширение файла
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (extension != ".pdf" && extension != ".docx")
-                return BadRequest("Only PDF and DOCX files are allowed");
+            if (!ALLOWED_EXTENSIONS.Contains(extension))
+                return BadRequest($"Only {string.Join(", ", ALLOWED_EXTENSIONS)} files are allowed");
 
-            // Создаем уникальное имя файла
             var fileName = $"{Guid.NewGuid()}{extension}";
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
-
-            // Создаем папку, если её нет
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, UPLOADS_FOLDER);
+            Directory.CreateDirectory(uploadsFolder);
 
             var filePath = Path.Combine(uploadsFolder, fileName);
-
-            // Сохраняем файл
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
 
-            // Возвращаем путь к файлу
-            return Ok(new { filePath = $"/uploads/{fileName}" });
+            return Ok(new { filePath = $"/{UPLOADS_FOLDER}/{fileName}" });
         }
 
         [HttpGet("download/{fileName}")]
         public IActionResult DownloadFile(string fileName)
         {
-            var filePath = Path.Combine(_environment.WebRootPath, "uploads", fileName);
-
+            var filePath = Path.Combine(_environment.WebRootPath, UPLOADS_FOLDER, fileName);
             if (!System.IO.File.Exists(filePath))
                 return NotFound("File not found");
 
@@ -60,10 +53,7 @@ namespace backend.Controllers
             }
             memory.Position = 0;
 
-            var contentType = "APPLICATION/octet-stream";
-            var originalFileName = fileName;
-
-            return File(memory, contentType, originalFileName);
+            return File(memory, "APPLICATION/octet-stream", fileName);
         }
     }
 } 

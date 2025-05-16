@@ -37,11 +37,4 @@ D:\global\final_project_vp\backend\obj\Debug\net6.0\refint\backend.dll
 D:\global\final_project_vp\backend\obj\Debug\net6.0\backend.pdb
 D:\global\final_project_vp\backend\obj\Debug\net6.0\backend.genruntimeconfig.cache
 D:\global\final_project_vp\backend\obj\Debug\net6.0\ref\backend.dll
-D:\global\final_project_vp\backend\bin\Debug\net6.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
-D:\global\final_project_vp\backend\bin\Debug\net6.0\Microsoft.IdentityModel.JsonWebTokens.dll
-D:\global\final_project_vp\backend\bin\Debug\net6.0\Microsoft.IdentityModel.Logging.dll
-D:\global\final_project_vp\backend\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.dll
-D:\global\final_project_vp\backend\bin\Debug\net6.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
-D:\global\final_project_vp\backend\bin\Debug\net6.0\Microsoft.IdentityModel.Tokens.dll
-D:\global\final_project_vp\backend\bin\Debug\net6.0\System.IdentityModel.Tokens.Jwt.dll
 D:\global\final_project_vp\backend\bin\Debug\net6.0\backend.staticwebassets.runtime.json

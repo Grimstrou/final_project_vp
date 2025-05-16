@@ -37,26 +37,19 @@ namespace backend.Services
 
         public async Task<bool> AddArticle(Article article)
         {
-            try
-            {
-                article.CreatedAt = DateTime.UtcNow;
-                await _context.Articles.AddAsync(article);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            article.CreatedAt = DateTime.UtcNow;
+            await _context.Articles.AddAsync(article);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        public async Task<bool> UpdateArticleStatus(int articleId, string status)
+        public async Task<bool> UpdateArticle(int articleId, Action<Article> updateAction)
         {
             var article = await _context.Articles.FindAsync(articleId);
             if (article == null)
                 return false;
 
-            article.Status = status;
+            updateAction(article);
             article.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;

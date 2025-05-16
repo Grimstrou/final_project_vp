@@ -4,7 +4,7 @@ using backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configure services
 builder.Services.AddControllers();
 
 // Добавляем CORS
@@ -19,18 +19,18 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Подключение к PostgreSQL
+// Configure database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Добавляем сервисы
+// Register services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ArticleService>();
 builder.Services.AddScoped<ReviewService>();
 
 var app = builder.Build();
 
-// Используем CORS
+// Configure middleware
 app.UseCors("AllowAll");
 
 // Используем статические файлы
