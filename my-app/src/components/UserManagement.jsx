@@ -1,68 +1,58 @@
 import React, { useState } from 'react';
 
-const UserManagement = ({ setActiveAdminTab }) => {
-  const [users, setUsers] = useState([
-    { 
-      id: 1, 
-      name: 'John Doe', 
-      role: 'Editor', 
-      status: 'active',
-      avatar: '/images/fadding-cat.gif'
-    },
-    { 
-      id: 2, 
-      name: 'Jane Smith', 
-      role: 'Reviewer', 
-      status: 'active',
-      avatar: '/images/sticker2.webp'
-    },
-    { 
-      id: 3, 
-      name: 'Mike Johnson', 
-      role: 'Author', 
-      status: 'inactive',
-      avatar: '/images/sticker.webp'
-    }
-  ]);
+const UserManagement = ({ users, setUsers, onAddUser, onDeleteUser, onToggleUserStatus }) => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', role: '' });
 
-  const toggleUserStatus = (id) => {
-    setUsers(users.map(user => 
-      user.id === id ? { 
-        ...user, 
-        status: user.status === 'active' ? 'inactive' : 'active' 
-      } : user
-    ));
+  const handleInputChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.firstName || !form.lastName || !form.email || !form.role) return;
+    onAddUser({
+      id: Date.now(),
+      name: form.firstName + ' ' + form.lastName,
+      email: form.email,
+      role: form.role,
+      status: 'active',
+      avatar: '/images/fadding-cat.gif',
+    });
+    setForm({ firstName: '', lastName: '', email: '', role: '' });
+    setShowAddForm(false);
   };
 
   return (
     <>
-      <div className="tabs">
-        <div 
-          className="tab active"
-          onClick={() => setActiveAdminTab('users')}
-        >
-          User Management
-        </div>
-        <div 
-          className="tab"
-          onClick={() => setActiveAdminTab('articles')}
-        >
-          Articles
-        </div>
-      </div>
-      
       <div className="profile-section">
         <h1 className="profile-title">Admin Dashboard</h1>
-        
         <div className="articles-header">
           <h2>User Management</h2>
           <input type="text" className="search-bar" placeholder="Search users..." />
         </div>
-        
-        <button className="btn btn-primary" style={{ marginBottom: '20px' }}>
+        <button className="btn btn-primary" style={{ marginBottom: '20px' }} onClick={() => setShowAddForm(true)}>
           Add New User
         </button>
-        
+        {showAddForm && (
+          <form onSubmit={handleSubmit} style={{ background: '#fafafa', padding: 20, borderRadius: 8, marginBottom: 20 }}>
+            <h3>Add New User</h3>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
+              <input name="firstName" value={form.firstName} onChange={handleInputChange} placeholder="First Name" style={{ flex: 1 }} />
+              <input name="lastName" value={form.lastName} onChange={handleInputChange} placeholder="Last Name" style={{ flex: 1 }} />
+            </div>
+            <input name="email" value={form.email} onChange={handleInputChange} placeholder="Email" style={{ width: '100%', marginBottom: 8 }} />
+            <select name="role" value={form.role} onChange={handleInputChange} style={{ width: '100%', marginBottom: 8 }}>
+              <option value="">Select Role</option>
+              <option value="Author">Author</option>
+              <option value="Reviewer">Reviewer</option>
+            </select>
+            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowAddForm(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary">Create User</button>
+            </div>
+          </form>
+        )}
         <table className="admin-table">
           <thead>
             <tr>
@@ -81,9 +71,10 @@ const UserManagement = ({ setActiveAdminTab }) => {
                       src={user.avatar} 
                       alt={user.name}
                       style={{
-                        width: '120px',
+                        width: '60px',
                         height: '60px',
-                        objectFit: 'cover'
+                        objectFit: 'cover',
+                        borderRadius: '50%'
                       }}
                     />
                     {user.name}
@@ -98,9 +89,16 @@ const UserManagement = ({ setActiveAdminTab }) => {
                 <td>
                   <button 
                     className={`btn ${user.status === 'active' ? 'btn-secondary' : 'btn-primary'}`}
-                    onClick={() => toggleUserStatus(user.id)}
+                    onClick={() => onToggleUserStatus(user.id)}
                   >
                     {user.status === 'active' ? 'Block' : 'Activate'}
+                  </button>
+                  <button 
+                    className="btn btn-danger" 
+                    style={{ marginLeft: 8 }}
+                    onClick={() => onDeleteUser(user.id)}
+                  >
+                    Delete
                   </button>
                 </td>
               </tr>

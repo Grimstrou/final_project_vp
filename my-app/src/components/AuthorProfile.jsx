@@ -139,7 +139,7 @@ export default function AuthorProfile() {
         <section className="profile-section">
           <div className="profile-header">
             <div>
-              <img src="/images/2.gif" alt="User avatar" style={{ width: 60 }} />
+              <img src="/images/dog-1.png" alt="User avatar" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', marginBottom: 8 }} />
               <h1 className="profile-title">{isEditing ? (
                 <input
                   type="text"

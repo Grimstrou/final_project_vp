@@ -23,17 +23,65 @@ import UserManagement from './components/UserManagement';
 // Регистрация
 import UserRegistration from './components/UserRegistration';
 
+//Роман: AdminDashboard объединяет управление пользователями и статьями
+function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('users');
+  const [users, setUsers] = useState([
+    { id: 1, name: 'John Doe', role: 'Editor', status: 'active', avatar: '/images/dog-1.png' },
+    { id: 2, name: 'Jane Smith', role: 'Reviewer', status: 'active', avatar: '/images/dog-1.png' },
+    { id: 3, name: 'Mike Johnson', role: 'Author', status: 'inactive', avatar: '/images/dog-1.png' }
+  ]);
+  const [articles, setArticles] = useState([
+    { id: 1, title: "Machine Learning Advances", author: "Sarah Johnson", status: "published", date: "May 4, 2025" },
+    { id: 2, title: "Blockchain in Healthcare", author: "Michael Chen", status: "pending", date: "May 3, 2025" },
+    { id: 3, title: "Sustainable Energy Solutions", author: "Emma Watson", status: "rejected", date: "May 2, 2025" }
+  ]);
+
+  //Роман: Добавление пользователя
+  const handleAddUser = (user) => setUsers([...users, user]);
+  //Роман: Удаление пользователя
+  const handleDeleteUser = (id) => setUsers(users.filter(u => u.id !== id));
+  //Роман: Блокировка/разблокировка пользователя
+  const handleToggleUserStatus = (id) => setUsers(users.map(u => u.id === id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u));
+  //Роман: Удаление статьи
+  const handleDeleteArticle = (id) => setArticles(articles.filter(a => a.id !== id));
+
+  return (
+    <div>
+      <div className="tabs">
+        <div className={`tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>User Management</div>
+        <div className={`tab ${activeTab === 'articles' ? 'active' : ''}`} onClick={() => setActiveTab('articles')}>Articles</div>
+      </div>
+      {activeTab === 'users' && (
+        <UserManagement
+          users={users}
+          setUsers={setUsers}
+          onAddUser={handleAddUser}
+          onDeleteUser={handleDeleteUser}
+          onToggleUserStatus={handleToggleUserStatus}
+        />
+      )}
+      {activeTab === 'articles' && (
+        <AdminArticles
+          articles={articles}
+          setArticles={setArticles}
+          onDeleteArticle={handleDeleteArticle}
+        />
+      )}
+    </div>
+  );
+}
+
 function App() {
   // Состояния для вкладок
   const [activeTab, setActiveTab] = useState('profile');
   const [activeReviewerTab, setActiveReviewerTab] = useState('inProgress');
-  const [activeAdminTab, setActiveAdminTab] = useState('users');
+  //const [activeAdminTab, setActiveAdminTab] = useState('users');
 
   return (
     <Router>
       <div className="app">
         <Header />
-
         <main className="container">
           <Routes>
             {/* Главная страница */}
@@ -71,24 +119,14 @@ function App() {
             } />
 
             {/* Админ */}
-            <Route path="/admin-users" element={
-              <UserManagement 
-                activeAdminTab={activeAdminTab} 
-                setActiveAdminTab={setActiveAdminTab} 
-              />
-            } />
-            <Route path="/admin-articles" element={
-              <AdminArticles 
-                activeAdminTab={activeAdminTab} 
-                setActiveAdminTab={setActiveAdminTab} 
-              />
-            } />
+            <Route path="/admin-users" element={<AdminDashboard />} />
+            <Route path="/admin-articles" element={<AdminDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
             {/* Регистрация */}
             <Route path="/register" element={<UserRegistration />} />
           </Routes>
         </main>
-
         <Footer />
       </div>
     </Router>
