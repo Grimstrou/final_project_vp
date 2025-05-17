@@ -4,9 +4,7 @@ using backend.Services;
 
 namespace backend.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ArticlesController : ControllerBase
+    public class ArticlesController : BaseController
     {
         private readonly ArticleService _articleService;
 
@@ -27,98 +25,16 @@ namespace backend.Controllers
             {
                 articles = await _articleService.GetAllArticles();
             }
-            var dto = articles.Select(a => new ArticleDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Description = a.Description,
-                FilePath = a.FilePath,
-                FileType = a.FileType,
-                Status = a.Status,
-                AuthorId = a.AuthorId,
-                Author = a.Author != null ? new UserShortDto { Id = a.Author.Id, FirstName = a.Author.FirstName, LastName = a.Author.LastName } : null,
-                ReviewerIds = a.ReviewerIds,
-                CreatedAt = a.CreatedAt,
-                UpdatedAt = a.UpdatedAt,
-                Reviews = a.Reviews?.Select(r => new ReviewDto
-                {
-                    Id = r.Id,
-                    Content = r.Content,
-                    Status = r.Status,
-                    ReviewerId = r.ReviewerId,
-                    ArticleId = r.ArticleId,
-                    IsAccepted = r.IsAccepted,
-                    CreatedAt = r.CreatedAt,
-                    UpdatedAt = r.UpdatedAt
-                }).ToList() ?? new List<ReviewDto>()
-            }).ToList();
-            return Ok(dto);
-        }
-
-        [HttpGet("author/{authorId}")]
-        public async Task<ActionResult<List<ArticleDto>>> GetAuthorArticles(int authorId)
-        {
-            var articles = await _articleService.GetAuthorArticles(authorId);
-            var dto = articles.Select(a => new ArticleDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Description = a.Description,
-                FilePath = a.FilePath,
-                FileType = a.FileType,
-                Status = a.Status,
-                AuthorId = a.AuthorId,
-                Author = a.Author != null ? new UserShortDto { Id = a.Author.Id, FirstName = a.Author.FirstName, LastName = a.Author.LastName } : null,
-                ReviewerIds = a.ReviewerIds,
-                CreatedAt = a.CreatedAt,
-                UpdatedAt = a.UpdatedAt,
-                Reviews = a.Reviews?.Select(r => new ReviewDto
-                {
-                    Id = r.Id,
-                    Content = r.Content,
-                    Status = r.Status,
-                    ReviewerId = r.ReviewerId,
-                    ArticleId = r.ArticleId,
-                    IsAccepted = r.IsAccepted,
-                    CreatedAt = r.CreatedAt,
-                    UpdatedAt = r.UpdatedAt
-                }).ToList() ?? new List<ReviewDto>()
-            }).ToList();
-            return Ok(dto);
+            return Ok(articles.Select(ConvertToDto).ToList());
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ArticleDto>> GetArticle(int id)
         {
-            var a = await _articleService.GetArticleById(id);
-            if (a == null)
+            var article = await _articleService.GetArticleById(id);
+            if (article == null)
                 return NotFound();
-            var dto = new ArticleDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Description = a.Description,
-                FilePath = a.FilePath,
-                FileType = a.FileType,
-                Status = a.Status,
-                AuthorId = a.AuthorId,
-                Author = a.Author != null ? new UserShortDto { Id = a.Author.Id, FirstName = a.Author.FirstName, LastName = a.Author.LastName } : null,
-                ReviewerIds = a.ReviewerIds,
-                CreatedAt = a.CreatedAt,
-                UpdatedAt = a.UpdatedAt,
-                Reviews = a.Reviews?.Select(r => new ReviewDto
-                {
-                    Id = r.Id,
-                    Content = r.Content,
-                    Status = r.Status,
-                    ReviewerId = r.ReviewerId,
-                    ArticleId = r.ArticleId,
-                    IsAccepted = r.IsAccepted,
-                    CreatedAt = r.CreatedAt,
-                    UpdatedAt = r.UpdatedAt
-                }).ToList() ?? new List<ReviewDto>()
-            };
-            return Ok(dto);
+            return Ok(ConvertToDto(article));
         }
 
         [HttpPost]
@@ -144,9 +60,33 @@ namespace backend.Controllers
             return HandleResult(result, "Article not found");
         }
 
-        private ActionResult HandleResult(bool success, string errorMessage)
+        private ArticleDto ConvertToDto(Article a)
         {
-            return success ? Ok() : NotFound(errorMessage);
+            return new ArticleDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                FilePath = a.FilePath,
+                FileType = a.FileType,
+                Status = a.Status,
+                AuthorId = a.AuthorId,
+                Author = a.Author != null ? new UserShortDto { Id = a.Author.Id, FirstName = a.Author.FirstName, LastName = a.Author.LastName } : null,
+                ReviewerIds = a.ReviewerIds,
+                CreatedAt = a.CreatedAt,
+                UpdatedAt = a.UpdatedAt,
+                Reviews = a.Reviews?.Select(r => new ReviewDto
+                {
+                    Id = r.Id,
+                    Content = r.Content,
+                    Status = r.Status,
+                    ReviewerId = r.ReviewerId,
+                    ArticleId = r.ArticleId,
+                    IsAccepted = r.IsAccepted,
+                    CreatedAt = r.CreatedAt,
+                    UpdatedAt = r.UpdatedAt
+                }).ToList() ?? new List<ReviewDto>()
+            };
         }
 
         // DTO classes

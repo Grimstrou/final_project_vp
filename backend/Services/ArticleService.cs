@@ -13,28 +13,28 @@ namespace backend.Services
             _context = context;
         }
 
+        private IQueryable<Article> GetArticlesWithIncludes()
+        {
+            return _context.Articles
+                .Include(a => a.Author)
+                .Include(a => a.Reviews);
+        }
+
         public async Task<List<Article>> GetAllArticles()
         {
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Reviews)
-                .ToListAsync();
+            return await GetArticlesWithIncludes().ToListAsync();
         }
 
         public async Task<List<Article>> GetAuthorArticles(int authorId)
         {
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Reviews)
+            return await GetArticlesWithIncludes()
                 .Where(a => a.AuthorId == authorId)
                 .ToListAsync();
         }
 
         public async Task<Article?> GetArticleById(int id)
         {
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Reviews)
+            return await GetArticlesWithIncludes()
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 

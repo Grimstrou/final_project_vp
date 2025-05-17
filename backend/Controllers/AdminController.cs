@@ -4,9 +4,7 @@ using backend.Services;
 
 namespace backend.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AdminController : ControllerBase
+    public class AdminController : BaseController
     {
         private readonly AuthService _authService;
         private readonly ArticleService _articleService;
@@ -86,12 +84,14 @@ namespace backend.Controllers
 
         public class StatusDto
         {
-            public string Status { get; set; }
+            public string Status { get; set; } = string.Empty;
         }
 
-        private ActionResult HandleResult(bool success, string errorMessage)
+        protected new ActionResult HandleResult(bool result, string errorMessage)
         {
-            return success ? Ok() : NotFound(errorMessage);
+            if (!result)
+                return BadRequest(errorMessage);
+            return Ok();
         }
     }
 } 

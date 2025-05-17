@@ -13,28 +13,28 @@ namespace backend.Services
             _context = context;
         }
 
+        private IQueryable<Review> GetReviewsWithIncludes()
+        {
+            return _context.Reviews
+                .Include(r => r.Reviewer)
+                .Include(r => r.Article);
+        }
+
         public async Task<List<Review>> GetAllReviews()
         {
-            return await _context.Reviews
-                .Include(r => r.Reviewer)
-                .Include(r => r.Article)
-                .ToListAsync();
+            return await GetReviewsWithIncludes().ToListAsync();
         }
 
         public async Task<List<Review>> GetReviewerReviews(int reviewerId)
         {
-            return await _context.Reviews
-                .Include(r => r.Reviewer)
-                .Include(r => r.Article)
+            return await GetReviewsWithIncludes()
                 .Where(r => r.ReviewerId == reviewerId)
                 .ToListAsync();
         }
 
         public async Task<Review?> GetReviewById(int id)
         {
-            return await _context.Reviews
-                .Include(r => r.Reviewer)
-                .Include(r => r.Article)
+            return await GetReviewsWithIncludes()
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
@@ -122,28 +122,31 @@ namespace backend.Services
             var review = await _context.Reviews.FirstOrDefaultAsync(r => r.ArticleId == articleId && r.ReviewerId == reviewerId);
             if (review == null)
                 return false;
+
             review.Content = content;
             review.Status = status;
             review.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
 
-            // После обновления рецензии проверяем финальный статус статьи
-            var article = await _context.Articles.Include(a => a.Reviews).FirstOrDefaultAsync(a => a.Id == articleId);
-            if (article != null && article.Reviews != null)
+            var article = await _context.Articles
+                .Include(a => a.Reviews)
+                .FirstOrDefaultAsync(a => a.Id == articleId);
+
+            if (article?.Reviews != null)
             {
-                if (article.Reviews.Any(r => r.Status == "accepted_for_publication"))
+                var newStatus = article.Reviews.Any(r => r.Status == "accepted_for_publication") 
+                    ? "accepted_for_publication" 
+                    : article.Reviews.Any(r => r.Status == "rejected") 
+                        ? "rejected" 
+                        : article.Status;
+
+                if (newStatus != article.Status)
                 {
-                    article.Status = "accepted_for_publication";
+                    article.Status = newStatus;
                     article.UpdatedAt = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
-                }
-                else if (article.Reviews.Any(r => r.Status == "rejected"))
-                {
-                    article.Status = "rejected";
-                    article.UpdatedAt = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
                 }
             }
+
+            await _context.SaveChangesAsync();
             return true;
         }
     }

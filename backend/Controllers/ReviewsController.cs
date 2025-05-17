@@ -4,9 +4,7 @@ using backend.Services;
 
 namespace backend.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ReviewsController : ControllerBase
+    public class ReviewsController : BaseController
     {
         private readonly ReviewService _reviewService;
 
@@ -109,51 +107,6 @@ namespace backend.Controllers
         {
             var result = await _reviewService.SubmitReview(articleId, dto.ReviewerId, dto.Text, dto.Status);
             return result ? Ok() : BadRequest("Failed to submit review");
-        }
-
-        public class AcceptDeclineDto
-        {
-            public int ArticleId { get; set; }
-            public int ReviewerId { get; set; }
-        }
-
-        public class SubmitReviewDto
-        {
-            public int ReviewerId { get; set; }
-            public string Text { get; set; } = string.Empty;
-            public string Status { get; set; } = string.Empty;
-        }
-
-        public class ReviewDto
-        {
-            public int Id { get; set; }
-            public string Content { get; set; }
-            public string Status { get; set; }
-            public int ReviewerId { get; set; }
-            public int ArticleId { get; set; }
-            public bool IsAccepted { get; set; }
-            public DateTime CreatedAt { get; set; }
-            public DateTime? UpdatedAt { get; set; }
-            public ArticleShortDto? Article { get; set; }
-        }
-
-        public class ArticleShortDto
-        {
-            public int Id { get; set; }
-            public string Title { get; set; }
-            public UserShortDto? Author { get; set; }
-        }
-
-        public class UserShortDto
-        {
-            public int Id { get; set; }
-            public string? FirstName { get; set; }
-            public string? LastName { get; set; }
-        }
-
-        private ActionResult HandleResult(bool success, string errorMessage)
-        {
-            return success ? Ok() : NotFound(errorMessage);
         }
     }
 }

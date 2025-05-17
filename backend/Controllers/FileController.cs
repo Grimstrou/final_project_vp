@@ -3,9 +3,7 @@ using System.IO;
 
 namespace backend.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class FileController : ControllerBase
+    public class FileController : BaseController
     {
         private readonly IWebHostEnvironment _environment;
         private const string UPLOADS_FOLDER = "uploads";
