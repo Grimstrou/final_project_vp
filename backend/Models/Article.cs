@@ -11,6 +11,7 @@ namespace backend.Models
         public int AuthorId { get; set; }
         public User? Author { get; set; }
         public List<int> ReviewerIds { get; set; } = new();
+        public List<Review> Reviews { get; set; } = new();
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
     }

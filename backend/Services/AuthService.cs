@@ -57,5 +57,55 @@ namespace backend.Services
         {
             return await _context.Users.FindAsync(id);
         }
+
+        public async Task<bool> DeleteUser(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return false;
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ChangeUserStatus(int userId, string status)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return false;
+            user.Status = status;
+            user.IsBlocked = status == "inactive";
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateUserProfile(int userId, User updatedUser)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return false;
+            user.FirstName = updatedUser.FirstName;
+            user.LastName = updatedUser.LastName;
+            user.Email = updatedUser.Email;
+            user.Specialization = updatedUser.Specialization;
+            user.Location = updatedUser.Location;
+            user.Bio = updatedUser.Bio;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<(User? user, string error)> LoginUser(string email, string password, string role)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+                return (null, "User not found");
+            if (user.IsBlocked)
+                return (null, "User is blocked");
+            if (user.PasswordHash != password)
+                return (null, "Invalid password");
+            if (user.Role != role)
+                return (null, "Role mismatch");
+            return (user, "");
+        }
     }
 }

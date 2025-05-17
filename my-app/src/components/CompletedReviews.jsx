@@ -1,34 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { API_ENDPOINTS } from '../config';
 
-const demoReviews = [
-  {
-    id: 1,
-    title: "Artificial Intelligence in Education",
-    authors: "David Wilson, Emma Brown",
-    decision: "Accept with Minor Revisions",
-    date: "Apr 20, 2025",
-    text: "Great work, but needs minor changes."
-  },
-  {
-    id: 2,
-    title: "Blockchain Technologies in Supply Chain",
-    authors: "Robert Chang, Lisa Martinez",
-    decision: "Major Revisions Required",
-    date: "Mar 15, 2025",
-    text: "The methodology section is weak. Please revise."
-  },
-  {
-    id: 3,
-    title: "Neural Networks in Image Processing",
-    authors: "James Anderson, Maria Garcia",
-    decision: "Accept as is",
-    date: "Feb 28, 2025",
-    text: "Excellent paper. No changes needed."
-  }
-];
+function ReviewModal({ open, onClose, review }) {
+  if (!open || !review) return null;
+  return (
+    <div className="modal-overlay" style={{ position: 'fixed', top:0, left:0, right:0, bottom:0, background: 'rgba(0,0,0,0.3)', zIndex: 1000 }}>
+      <div className="modal-content" style={{ background: '#fff', maxWidth: 600, margin: '60px auto', padding: 32, borderRadius: 8, position: 'relative' }}>
+        <h2>Full Review</h2>
+        <div><b>Article:</b> {review.article?.title}</div>
+        <div><b>Authors:</b> {review.article?.author?.firstName} {review.article?.author?.lastName}</div>
+        <div><b>Decision:</b> {review.status}</div>
+        <div><b>Completed:</b> {review.updatedAt ? new Date(review.updatedAt).toLocaleDateString() : new Date(review.createdAt).toLocaleDateString()}</div>
+        <div style={{ margin: '16px 0' }}><b>Review Text:</b><br />{review.content}</div>
+        <button className="btn btn-secondary" onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
 
-const CompletedReviews = ({ setActiveReviewerTab, reviews = [] }) => {
-  const data = reviews.length > 0 ? reviews : demoReviews;
+const CompletedReviews = ({ reviewerId, reviews = [] }) => {
+  const [data, setData] = useState(reviews);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedReview, setSelectedReview] = useState(null);
+
+  useEffect(() => {
+    if (reviews.length === 0 && reviewerId) {
+      fetchCompletedReviews();
+    }
+  }, [reviewerId]);
+
+  const fetchCompletedReviews = async () => {
+    try {
+      const res = await fetch(`${API_ENDPOINTS.REVIEWS}/reviewer/${reviewerId}`);
+      const all = await res.json();
+      // completed only
+      const completed = all.filter(r => r.status === 'accepted_for_publication' || r.status === 'rejected');
+      setData(completed);
+    } catch (err) {
+      setData([]);
+    }
+  };
+
+  const handleView = (review) => {
+    setSelectedReview(review);
+    setModalOpen(true);
+  };
+
   return (
     <>
       <div className="articles-section">
@@ -36,16 +53,17 @@ const CompletedReviews = ({ setActiveReviewerTab, reviews = [] }) => {
         <div className="review-cards">
           {data.map(review => (
             <div key={review.id} className="review-card">
-              <div className="review-card-title">{review.title}</div>
-              <div className="review-card-authors">Authors: {review.authors}</div>
-              <div className={`review-card-status`}>Decision: {review.decision}</div>
-              <div className="review-card-date">Completed: {review.date}</div>
-              <div className="review-card-text" style={{ margin: '12px 0', color: '#333' }}><b>Review:</b> {review.text}</div>
-              <button className="btn btn-secondary">View Full Review</button>
+              <div className="review-card-title">{review.article?.title}</div>
+              <div className="review-card-authors">Authors: {review.article?.author?.firstName} {review.article?.author?.lastName}</div>
+              <div className="review-card-status">Decision: {review.status}</div>
+              <div className="review-card-date">Completed: {review.updatedAt ? new Date(review.updatedAt).toLocaleDateString() : new Date(review.createdAt).toLocaleDateString()}</div>
+              <div className="review-card-text" style={{ margin: '12px 0', color: '#333' }}><b>Review:</b> {review.content}</div>
+              <button className="btn btn-secondary" onClick={() => handleView(review)}>View Full Review</button>
             </div>
           ))}
         </div>
       </div>
+      <ReviewModal open={modalOpen} onClose={() => setModalOpen(false)} review={selectedReview} />
     </>
   );
 };

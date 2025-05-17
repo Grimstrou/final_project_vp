@@ -1,21 +1,10 @@
-import React, { useState } from 'react';
-
-const initialNewRequests = [
-  {
-    id: 1,
-    title: 'Advanced Neural Networks in Image Processing',
-    authors: 'Mark Williams, Lisa Chen',
-    abstract: 'This paper presents novel approaches in neural network architectures for advanced image processing tasks...',
-    requestDate: 'May 1, 2025',
-    expectedTime: '4-5 hours',
-    pages: 25
-  }
-];
+import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config';
 
 //Роман Форма рецензии (модальное окно)
 function ReviewFormModal({ open, onClose, article, onSubmit }) {
   const [text, setText] = useState('');
-  const [status, setStatus] = useState('revision');
+  const [status, setStatus] = useState('sent_for_revision');
   if (!open) return null;
   return (
     <div className="modal-overlay" style={{ position: 'fixed', top:0, left:0, right:0, bottom:0, background: 'rgba(0,0,0,0.3)', zIndex: 1000 }}>
@@ -33,9 +22,9 @@ function ReviewFormModal({ open, onClose, article, onSubmit }) {
         <div style={{ marginBottom: 16 }}>
           <label>Status:&nbsp;</label>
           <select value={status} onChange={e => setStatus(e.target.value)}>
-            <option value="revision">Отправлено на доработку</option>
-            <option value="accepted">Принято к публикации</option>
-            <option value="rejected">Отклонено</option>
+            <option value="sent_for_revision">Sent for revision</option>
+            <option value="accepted_for_publication">Accepted for publication</option>
+            <option value="rejected">Rejected</option>
           </select>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -47,36 +36,70 @@ function ReviewFormModal({ open, onClose, article, onSubmit }) {
   );
 }
 
-const InProgressReviews = ({ setActiveReviewerTab, inProgress, setInProgress, onCompleteReview }) => {
-  const [newRequests, setNewRequests] = useState(initialNewRequests);
-  //Роман состояние для модального окна
+const InProgressReviews = ({ reviewerId, inProgress, setInProgress, onReviewsChange }) => {
+  const [newRequests, setNewRequests] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [currentArticle, setCurrentArticle] = useState(null);
 
-  const handleAccept = (id) => {
-    const accepted = newRequests.find(r => r.id === id);
-    setInProgress([...inProgress, {
-      id: accepted.id,
-      title: accepted.title,
-      authors: accepted.authors,
-      dueDate: 'May 30, 2025',
-      progress: 0,
-      daysLeft: 20
-    }]);
-    setNewRequests(newRequests.filter(r => r.id !== id));
+  useEffect(() => {
+    fetchNewRequests();
+  }, []);
+
+  const fetchNewRequests = async () => {
+    try {
+      const res = await fetch(`${API_ENDPOINTS.REVIEWS}/new?reviewerId=${reviewerId}`);
+      const data = await res.json();
+      setNewRequests(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setNewRequests([]);
+    }
   };
-  const handleDecline = (id) => {
-    setNewRequests(newRequests.filter(r => r.id !== id));
+
+  // Принять запрос на рецензию
+  const handleAccept = async (id) => {
+    try {
+      const res = await fetch(`${API_ENDPOINTS.REVIEWS}/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId, articleId: id })
+      });
+      if (res.ok) {
+        await fetchNewRequests();
+        onReviewsChange();
+      }
+    } catch (err) {}
   };
-  //Роман открыть форму рецензии
+  // Отклонить запрос
+  const handleDecline = async (id) => {
+    try {
+      const res = await fetch(`${API_ENDPOINTS.REVIEWS}/decline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewerId, articleId: id })
+      });
+      if (res.ok) {
+        await fetchNewRequests();
+      }
+    } catch (err) {}
+  };
+  // Открыть форму рецензии
   const handleContinueReview = (article) => {
     setCurrentArticle(article);
     setOpenModal(true);
   };
-  //Роман обработка отправки рецензии
-  const handleSubmitReview = (text, status) => {
+  // Отправить рецензию
+  const handleSubmitReview = async (text, status) => {
     if (currentArticle) {
-      onCompleteReview(currentArticle, text, status);
+      try {
+        const res = await fetch(`${API_ENDPOINTS.REVIEWS}/${currentArticle.id}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewerId, text, status })
+        });
+        if (res.ok) {
+          onReviewsChange();
+        }
+      } catch (err) {}
     }
     setOpenModal(false);
     setCurrentArticle(null);
@@ -111,19 +134,15 @@ const InProgressReviews = ({ setActiveReviewerTab, inProgress, setInProgress, on
         ) : (
           inProgress.map(review => (
             <div key={review.id} className="review-card" style={{ marginBottom: 24 }}>
-              <div className="review-card-title">{review.title}</div>
-              <div className="review-card-authors">Authors: {review.authors}</div>
-              <div className="progress-container" style={{ margin: '15px 0' }}>
-                <div className="progress-bar" style={{ 
-                  width: `${review.progress}%`,
-                  height: '10px',
-                  backgroundColor: '#222',
-                  borderRadius: '5px'
-                }}></div>
-                <div className="progress-text">Progress: {review.progress}%</div>
+              <div className="review-card-title">{review.article?.title}</div>
+              <div className="review-card-authors">Authors: {review.article?.author?.firstName} {review.article?.author?.lastName}</div>
+              <div className="review-card-status">Status: {review.status}</div>
+              <div className="review-card-date">Started: {new Date(review.createdAt).toLocaleDateString()}</div>
+              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                <button className="btn btn-primary" onClick={() => handleContinueReview(review.article)}>
+                  Continue Review
+                </button>
               </div>
-              <div className="review-card-date">Due: {review.dueDate} &nbsp;|&nbsp; <span style={{ color: '#888' }}>{review.daysLeft} days remaining</span></div>
-              <button className="btn btn-primary" onClick={() => handleContinueReview(review)}>Continue Review</button>
             </div>
           ))
         )}

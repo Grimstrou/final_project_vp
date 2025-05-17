@@ -1,69 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import InProgressReviews from './InProgressReviews';
 import CompletedReviews from './CompletedReviews';
-
-const initialInProgress = [
-  {
-    id: 2,
-    title: 'Machine Learning Applications in Healthcare',
-    authors: 'Sarah Johnson, Michael Chen',
-    dueDate: 'May 15, 2025',
-    progress: 60,
-    daysLeft: 12
-  },
-  {
-    id: 3,
-    title: 'Blockchain in Supply Chain Management',
-    authors: 'Robert Lee, Anna Wang',
-    dueDate: 'May 20, 2025',
-    progress: 30,
-    daysLeft: 17
-  }
-];
+import { API_ENDPOINTS } from '../config';
+import { useNavigate } from 'react-router-dom';
 
 export default function ReviewerProfile({ activeReviewerTab, setActiveReviewerTab }) {
-  const [inProgress, setInProgress] = useState(initialInProgress);
+  const [inProgress, setInProgress] = useState([]);
   const [completedReviews, setCompletedReviews] = useState([]);
+  const [reviewerId, setReviewerId] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [tab, setTab] = useState(() => localStorage.getItem('reviewerTab') || 'profile');
+  const navigate = useNavigate();
 
-  const handleCompleteReview = (article, text, status) => {
-    setInProgress(inProgress.filter(r => r.id !== article.id));
-    setCompletedReviews([
-      ...completedReviews,
-      {
-        id: article.id,
-        title: article.title,
-        authors: article.authors,
-        decision:
-          status === 'revision' ? 'Отправлено на доработку' :
-          status === 'accepted' ? 'Принято к публикации' :
-          'Отклонено',
-        date: new Date().toLocaleDateString(),
-        text: text
-      }
-    ]);
+  useEffect(() => {
+    const id = localStorage.getItem('reviewerId');
+    setReviewerId(id);
+  }, []);
+
+  useEffect(() => {
+    if (reviewerId) {
+      fetchReviews();
+      fetchProfile();
+    }
+  }, [reviewerId]);
+
+  useEffect(() => {
+    localStorage.setItem('reviewerTab', tab);
+    if (typeof setActiveReviewerTab === 'function') setActiveReviewerTab(tab);
+  }, [tab]);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch(`${API_ENDPOINTS.ADMIN}/users/${reviewerId}`);
+      const data = await res.json();
+      setProfile({
+        ...data,
+        fullName: [data.firstName, data.lastName].filter(Boolean).join(' ')
+      });
+    } catch (err) {
+      setProfile(null);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const res = await fetch(`${API_ENDPOINTS.REVIEWS}/reviewer/${reviewerId}`);
+      const data = await res.json();
+      
+      // Разделяем отзывы на in progress и completed по новым статусам
+      const inProgressReviews = data.filter(review => 
+        review.status === "InProgress" || review.status === "sent_for_revision"
+      );
+      const completedReviews = data.filter(review => 
+        review.status === "accepted_for_publication" || review.status === "rejected"
+      );
+
+      setInProgress(inProgressReviews);
+      setCompletedReviews(completedReviews);
+    } catch (err) {
+      setInProgress([]);
+      setCompletedReviews([]);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('reviewerId');
+    localStorage.removeItem('reviewerTab');
+    navigate('/register');
   };
 
   let content;
-  if (activeReviewerTab === 'profile') {
+  if (tab === 'profile') {
     content = (
-      <div className="profile-section">
+      <div className="profile-section" style={{ position: 'relative' }}>
         <h1 className="profile-title">Reviewer Dashboard</h1>
         <div className="profile-grid">
           <div className="profile-field">
             <span className="profile-label">Full Name</span>
-            <div className="profile-value">John Smith</div>
+            <div className="profile-value">{profile?.fullName}</div>
           </div>
           <div className="profile-field">
             <span className="profile-label">Email</span>
-            <div className="profile-value">john.smith@university.edu</div>
+            <div className="profile-value">{profile?.email}</div>
           </div>
           <div className="profile-field">
             <span className="profile-label">Institution</span>
-            <div className="profile-value">University of Science</div>
+            <div className="profile-value">{profile?.institution || ''}</div>
           </div>
           <div className="profile-field">
             <span className="profile-label">Field of Expertise</span>
-            <div className="profile-value">Computer Science</div>
+            <div className="profile-value">{profile?.specialization || ''}</div>
           </div>
         </div>
         <div className="reviewer-stats">
@@ -97,32 +123,38 @@ export default function ReviewerProfile({ activeReviewerTab, setActiveReviewerTa
             </select>
           </div>
         </div>
+        <button 
+          onClick={handleLogout} 
+          style={{ position: 'absolute', right: 32, top: 32, padding: '10px 24px', background: '#f5f5f5', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 500 }}
+        >
+          Logout
+        </button>
       </div>
     );
-  } else if (activeReviewerTab === 'inProgress') {
-    content = <InProgressReviews setActiveReviewerTab={setActiveReviewerTab} inProgress={inProgress} setInProgress={setInProgress} onCompleteReview={handleCompleteReview} />;
-  } else if (activeReviewerTab === 'completed') {
-    content = <CompletedReviews setActiveReviewerTab={setActiveReviewerTab} reviews={completedReviews} />;
+  } else if (tab === 'inProgress') {
+    content = <InProgressReviews reviewerId={reviewerId} inProgress={inProgress} setInProgress={setInProgress} onReviewsChange={fetchReviews} />;
+  } else if (tab === 'completed') {
+    content = <CompletedReviews reviewerId={reviewerId} reviews={completedReviews} />;
   }
 
   return (
     <>
       <div className="tabs">
         <div 
-          className={`tab ${activeReviewerTab === 'profile' ? 'active' : ''}`} 
-          onClick={() => setActiveReviewerTab('profile')}
+          className={`tab ${tab === 'profile' ? 'active' : ''}`} 
+          onClick={() => setTab('profile')}
         >
           Profile
         </div>
         <div 
-          className={`tab ${activeReviewerTab === 'inProgress' ? 'active' : ''}`} 
-          onClick={() => setActiveReviewerTab('inProgress')}
+          className={`tab ${tab === 'inProgress' ? 'active' : ''}`} 
+          onClick={() => setTab('inProgress')}
         >
           In Progress Reviews
         </div>
         <div 
-          className={`tab ${activeReviewerTab === 'completed' ? 'active' : ''}`} 
-          onClick={() => setActiveReviewerTab('completed')}
+          className={`tab ${tab === 'completed' ? 'active' : ''}`} 
+          onClick={() => setTab('completed')}
         >
           Completed Reviews
         </div>

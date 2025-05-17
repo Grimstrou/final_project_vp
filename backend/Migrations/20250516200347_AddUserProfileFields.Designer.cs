@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -12,9 +13,10 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250516200347_AddUserProfileFields")]
+    partial class AddUserProfileFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -184,7 +186,7 @@ namespace backend.Migrations
                         {
                             Id = 1,
                             Bio = "",
-                            CreatedAt = new DateTime(2025, 5, 17, 1, 33, 20, 488, DateTimeKind.Utc).AddTicks(168),
+                            CreatedAt = new DateTime(2025, 5, 16, 20, 3, 47, 449, DateTimeKind.Utc).AddTicks(3766),
                             Email = "admin@example.com",
                             FirstName = "Admin",
                             IsBlocked = false,
@@ -211,7 +213,7 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.Models.Review", b =>
                 {
                     b.HasOne("backend.Models.Article", "Article")
-                        .WithMany("Reviews")
+                        .WithMany()
                         .HasForeignKey("ArticleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -225,11 +227,6 @@ namespace backend.Migrations
                     b.Navigation("Article");
 
                     b.Navigation("Reviewer");
-                });
-
-            modelBuilder.Entity("backend.Models.Article", b =>
-                {
-                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }

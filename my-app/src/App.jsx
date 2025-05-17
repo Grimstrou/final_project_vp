@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
 // Компоненты
 import Header from './components/Header';
@@ -26,47 +26,31 @@ import UserRegistration from './components/UserRegistration';
 //Роман: AdminDashboard объединяет управление пользователями и статьями
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('users');
-  const [users, setUsers] = useState([
-    { id: 1, name: 'John Doe', role: 'Editor', status: 'active', avatar: '/images/dog-1.png' },
-    { id: 2, name: 'Jane Smith', role: 'Reviewer', status: 'active', avatar: '/images/dog-1.png' },
-    { id: 3, name: 'Mike Johnson', role: 'Author', status: 'inactive', avatar: '/images/dog-1.png' }
-  ]);
-  const [articles, setArticles] = useState([
-    { id: 1, title: "Machine Learning Advances", author: "Sarah Johnson", status: "published", date: "May 4, 2025" },
-    { id: 2, title: "Blockchain in Healthcare", author: "Michael Chen", status: "pending", date: "May 3, 2025" },
-    { id: 3, title: "Sustainable Energy Solutions", author: "Emma Watson", status: "rejected", date: "May 2, 2025" }
-  ]);
+  const navigate = useNavigate();
 
-  //Роман: Добавление пользователя
-  const handleAddUser = (user) => setUsers([...users, user]);
-  //Роман: Удаление пользователя
-  const handleDeleteUser = (id) => setUsers(users.filter(u => u.id !== id));
-  //Роман: Блокировка/разблокировка пользователя
-  const handleToggleUserStatus = (id) => setUsers(users.map(u => u.id === id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u));
-  //Роман: Удаление статьи
-  const handleDeleteArticle = (id) => setArticles(articles.filter(a => a.id !== id));
+  const handleLogout = () => {
+    localStorage.removeItem('adminEmail');
+    navigate('/register');
+  };
 
+  // Прокидываем функцию логаута в UserManagement
   return (
-    <div>
+    <div className="profile-section" style={{ position: 'relative', marginTop: 32 }}>
+      <button
+        onClick={handleLogout}
+        style={{ position: 'absolute', right: 32, top: 24, padding: '10px 24px', background: '#f5f5f5', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 500, zIndex: 2 }}
+      >
+        Logout
+      </button>
       <div className="tabs">
         <div className={`tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>User Management</div>
         <div className={`tab ${activeTab === 'articles' ? 'active' : ''}`} onClick={() => setActiveTab('articles')}>Articles</div>
       </div>
       {activeTab === 'users' && (
-        <UserManagement
-          users={users}
-          setUsers={setUsers}
-          onAddUser={handleAddUser}
-          onDeleteUser={handleDeleteUser}
-          onToggleUserStatus={handleToggleUserStatus}
-        />
+        <UserManagement onAdminDeleted={handleLogout} />
       )}
       {activeTab === 'articles' && (
-        <AdminArticles
-          articles={articles}
-          setArticles={setArticles}
-          onDeleteArticle={handleDeleteArticle}
-        />
+        <AdminArticles />
       )}
     </div>
   );

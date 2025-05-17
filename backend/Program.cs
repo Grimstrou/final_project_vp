@@ -33,8 +33,11 @@ var app = builder.Build();
 // Configure middleware
 app.UseCors("AllowAll");
 
-// Используем статические файлы
-app.UseStaticFiles();
+// Используем статические файлы только если директория существует
+if (Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "wwwroot")))
+{
+    app.UseStaticFiles();
+}
 
 // Настраиваем маршрутизацию
 app.MapControllers();

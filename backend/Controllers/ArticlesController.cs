@@ -16,26 +16,109 @@ namespace backend.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Article>>> GetAllArticles()
+        public async Task<ActionResult<List<ArticleDto>>> GetAllArticles([FromQuery] int? authorId)
         {
-            var articles = await _articleService.GetAllArticles();
-            return Ok(articles);
+            List<Article> articles;
+            if (authorId.HasValue)
+            {
+                articles = await _articleService.GetAuthorArticles(authorId.Value);
+            }
+            else
+            {
+                articles = await _articleService.GetAllArticles();
+            }
+            var dto = articles.Select(a => new ArticleDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                FilePath = a.FilePath,
+                FileType = a.FileType,
+                Status = a.Status,
+                AuthorId = a.AuthorId,
+                Author = a.Author != null ? new UserShortDto { Id = a.Author.Id, FirstName = a.Author.FirstName, LastName = a.Author.LastName } : null,
+                ReviewerIds = a.ReviewerIds,
+                CreatedAt = a.CreatedAt,
+                UpdatedAt = a.UpdatedAt,
+                Reviews = a.Reviews?.Select(r => new ReviewDto
+                {
+                    Id = r.Id,
+                    Content = r.Content,
+                    Status = r.Status,
+                    ReviewerId = r.ReviewerId,
+                    ArticleId = r.ArticleId,
+                    IsAccepted = r.IsAccepted,
+                    CreatedAt = r.CreatedAt,
+                    UpdatedAt = r.UpdatedAt
+                }).ToList() ?? new List<ReviewDto>()
+            }).ToList();
+            return Ok(dto);
         }
 
         [HttpGet("author/{authorId}")]
-        public async Task<ActionResult<List<Article>>> GetAuthorArticles(int authorId)
+        public async Task<ActionResult<List<ArticleDto>>> GetAuthorArticles(int authorId)
         {
             var articles = await _articleService.GetAuthorArticles(authorId);
-            return Ok(articles);
+            var dto = articles.Select(a => new ArticleDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                FilePath = a.FilePath,
+                FileType = a.FileType,
+                Status = a.Status,
+                AuthorId = a.AuthorId,
+                Author = a.Author != null ? new UserShortDto { Id = a.Author.Id, FirstName = a.Author.FirstName, LastName = a.Author.LastName } : null,
+                ReviewerIds = a.ReviewerIds,
+                CreatedAt = a.CreatedAt,
+                UpdatedAt = a.UpdatedAt,
+                Reviews = a.Reviews?.Select(r => new ReviewDto
+                {
+                    Id = r.Id,
+                    Content = r.Content,
+                    Status = r.Status,
+                    ReviewerId = r.ReviewerId,
+                    ArticleId = r.ArticleId,
+                    IsAccepted = r.IsAccepted,
+                    CreatedAt = r.CreatedAt,
+                    UpdatedAt = r.UpdatedAt
+                }).ToList() ?? new List<ReviewDto>()
+            }).ToList();
+            return Ok(dto);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Article>> GetArticle(int id)
+        public async Task<ActionResult<ArticleDto>> GetArticle(int id)
         {
-            var article = await _articleService.GetArticleById(id);
-            if (article == null)
+            var a = await _articleService.GetArticleById(id);
+            if (a == null)
                 return NotFound();
-            return Ok(article);
+            var dto = new ArticleDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                FilePath = a.FilePath,
+                FileType = a.FileType,
+                Status = a.Status,
+                AuthorId = a.AuthorId,
+                Author = a.Author != null ? new UserShortDto { Id = a.Author.Id, FirstName = a.Author.FirstName, LastName = a.Author.LastName } : null,
+                ReviewerIds = a.ReviewerIds,
+                CreatedAt = a.CreatedAt,
+                UpdatedAt = a.UpdatedAt,
+                Reviews = a.Reviews?.Select(r => new ReviewDto
+                {
+                    Id = r.Id,
+                    Content = r.Content,
+                    Status = r.Status,
+                    ReviewerId = r.ReviewerId,
+                    ArticleId = r.ArticleId,
+                    IsAccepted = r.IsAccepted,
+                    CreatedAt = r.CreatedAt,
+                    UpdatedAt = r.UpdatedAt
+                }).ToList() ?? new List<ReviewDto>()
+            };
+            return Ok(dto);
         }
 
         [HttpPost]
@@ -64,6 +147,40 @@ namespace backend.Controllers
         private ActionResult HandleResult(bool success, string errorMessage)
         {
             return success ? Ok() : NotFound(errorMessage);
+        }
+
+        // DTO classes
+        public class ArticleDto
+        {
+            public int Id { get; set; }
+            public string Title { get; set; }
+            public string Description { get; set; }
+            public string FilePath { get; set; }
+            public string FileType { get; set; }
+            public string Status { get; set; }
+            public int AuthorId { get; set; }
+            public UserShortDto? Author { get; set; }
+            public List<int> ReviewerIds { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public DateTime? UpdatedAt { get; set; }
+            public List<ReviewDto> Reviews { get; set; }
+        }
+        public class ReviewDto
+        {
+            public int Id { get; set; }
+            public string Content { get; set; }
+            public string Status { get; set; }
+            public int ReviewerId { get; set; }
+            public int ArticleId { get; set; }
+            public bool IsAccepted { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public DateTime? UpdatedAt { get; set; }
+        }
+        public class UserShortDto
+        {
+            public int Id { get; set; }
+            public string? FirstName { get; set; }
+            public string? LastName { get; set; }
         }
     }
 }

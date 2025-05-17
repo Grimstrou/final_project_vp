@@ -20,7 +20,6 @@ namespace backend.Data
             // Configure User entity
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasIndex(e => e.Email).IsUnique();
                 entity.Property(e => e.Role).HasDefaultValue("Author");
                 entity.Property(e => e.IsBlocked).HasDefaultValue(false);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -53,6 +52,12 @@ namespace backend.Data
                     CreatedAt = DateTime.UtcNow
                 }
             );
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Article)
+                .WithMany(a => a.Reviews)
+                .HasForeignKey(r => r.ArticleId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -23,10 +23,32 @@ namespace backend.Controllers
         }
 
         [HttpGet("reviewer/{reviewerId}")]
-        public async Task<ActionResult<List<Review>>> GetReviewerReviews(int reviewerId)
+        public async Task<ActionResult<List<ReviewDto>>> GetReviewerReviews(int reviewerId)
         {
             var reviews = await _reviewService.GetReviewerReviews(reviewerId);
-            return Ok(reviews);
+            var dto = reviews.Select(r => new ReviewDto
+            {
+                Id = r.Id,
+                Content = r.Content,
+                Status = r.Status,
+                ReviewerId = r.ReviewerId,
+                ArticleId = r.ArticleId,
+                IsAccepted = r.IsAccepted,
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt,
+                Article = r.Article != null ? new ArticleShortDto
+                {
+                    Id = r.Article.Id,
+                    Title = r.Article.Title,
+                    Author = r.Article.Author != null ? new UserShortDto
+                    {
+                        Id = r.Article.Author.Id,
+                        FirstName = r.Article.Author.FirstName,
+                        LastName = r.Article.Author.LastName
+                    } : null
+                } : null
+            }).ToList();
+            return Ok(dto);
         }
 
         [HttpGet("{id}")]
@@ -59,6 +81,74 @@ namespace backend.Controllers
         {
             var result = await _reviewService.HandleReviewRequest(id, accept);
             return HandleResult(result, "Review not found");
+        }
+
+        [HttpGet("new")]
+        public async Task<ActionResult<List<Article>>> GetArticlesForReview([FromQuery] int reviewerId)
+        {
+            var articles = await _reviewService.GetArticlesForReview(reviewerId);
+            return Ok(articles);
+        }
+
+        [HttpPost("accept")]
+        public async Task<ActionResult> AcceptReview([FromBody] AcceptDeclineDto dto)
+        {
+            var result = await _reviewService.AcceptReview(dto.ArticleId, dto.ReviewerId);
+            return result ? Ok() : BadRequest("Failed to accept review");
+        }
+
+        [HttpPost("decline")]
+        public async Task<ActionResult> DeclineReview([FromBody] AcceptDeclineDto dto)
+        {
+            var result = await _reviewService.DeclineReview(dto.ArticleId, dto.ReviewerId);
+            return result ? Ok() : BadRequest("Failed to decline review");
+        }
+
+        [HttpPost("{articleId}/submit")]
+        public async Task<ActionResult> SubmitReview(int articleId, [FromBody] SubmitReviewDto dto)
+        {
+            var result = await _reviewService.SubmitReview(articleId, dto.ReviewerId, dto.Text, dto.Status);
+            return result ? Ok() : BadRequest("Failed to submit review");
+        }
+
+        public class AcceptDeclineDto
+        {
+            public int ArticleId { get; set; }
+            public int ReviewerId { get; set; }
+        }
+
+        public class SubmitReviewDto
+        {
+            public int ReviewerId { get; set; }
+            public string Text { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty;
+        }
+
+        public class ReviewDto
+        {
+            public int Id { get; set; }
+            public string Content { get; set; }
+            public string Status { get; set; }
+            public int ReviewerId { get; set; }
+            public int ArticleId { get; set; }
+            public bool IsAccepted { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public DateTime? UpdatedAt { get; set; }
+            public ArticleShortDto? Article { get; set; }
+        }
+
+        public class ArticleShortDto
+        {
+            public int Id { get; set; }
+            public string Title { get; set; }
+            public UserShortDto? Author { get; set; }
+        }
+
+        public class UserShortDto
+        {
+            public int Id { get; set; }
+            public string? FirstName { get; set; }
+            public string? LastName { get; set; }
         }
 
         private ActionResult HandleResult(bool success, string errorMessage)

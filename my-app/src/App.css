@@ -245,6 +245,7 @@ header {
 
 .form-textarea {
   min-height: 200px;
+  resize: none;
 }
 
 .file-upload {
@@ -391,4 +392,11 @@ footer {
   font-size: 14px;
   margin-top: 50px;
   border-top: 1px solid #eee;
+}
+
+.submit-article-fixed {
+  width: 600px;
+  max-width: 100%;
+  margin: 0 auto 32px auto;
+  /* Можно добавить тень и скругление, если нужно */
 }

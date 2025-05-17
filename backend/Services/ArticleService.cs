@@ -17,6 +17,7 @@ namespace backend.Services
         {
             return await _context.Articles
                 .Include(a => a.Author)
+                .Include(a => a.Reviews)
                 .ToListAsync();
         }
 
@@ -24,6 +25,7 @@ namespace backend.Services
         {
             return await _context.Articles
                 .Include(a => a.Author)
+                .Include(a => a.Reviews)
                 .Where(a => a.AuthorId == authorId)
                 .ToListAsync();
         }
@@ -32,6 +34,7 @@ namespace backend.Services
         {
             return await _context.Articles
                 .Include(a => a.Author)
+                .Include(a => a.Reviews)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 

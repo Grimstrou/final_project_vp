@@ -63,6 +63,32 @@ namespace backend.Controllers
             return HandleResult(result, "Article not found");
         }
 
+        [HttpDelete("users/{id}")]
+        public async Task<ActionResult> DeleteUser(int id)
+        {
+            var result = await _authService.DeleteUser(id);
+            return HandleResult(result, "User not found");
+        }
+
+        [HttpPatch("users/{id}/status")]
+        public async Task<ActionResult> ChangeUserStatus(int id, [FromBody] StatusDto dto)
+        {
+            var result = await _authService.ChangeUserStatus(id, dto.Status);
+            return HandleResult(result, "User not found");
+        }
+
+        [HttpPatch("users/{id}")]
+        public async Task<ActionResult> UpdateUserProfile(int id, [FromBody] User updatedUser)
+        {
+            var result = await _authService.UpdateUserProfile(id, updatedUser);
+            return HandleResult(result, "User not found");
+        }
+
+        public class StatusDto
+        {
+            public string Status { get; set; }
+        }
+
         private ActionResult HandleResult(bool success, string errorMessage)
         {
             return success ? Ok() : NotFound(errorMessage);

@@ -10,5 +10,9 @@ namespace backend.Models
         public string Role { get; set; } = "Author"; // Author / Reviewer / Admin
         public bool IsBlocked { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string Status { get; set; } = "active";
+        public string Specialization { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public string Bio { get; set; } = string.Empty;
     }
 }

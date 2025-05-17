@@ -71,5 +71,80 @@ namespace backend.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<List<Article>> GetArticlesForReview(int reviewerId)
+        {
+            // Статьи, которые не были назначены этому рецензенту и имеют статус NotReviewed
+            return await _context.Articles
+                .Where(a => a.Status == "NotReviewed" && !a.ReviewerIds.Contains(reviewerId))
+                .ToListAsync();
+        }
+
+        public async Task<bool> AcceptReview(int articleId, int reviewerId)
+        {
+            var article = await _context.Articles.FindAsync(articleId);
+            if (article == null)
+                return false;
+
+            // Создаем новый объект Review
+            var review = new Review
+            {
+                ArticleId = articleId,
+                ReviewerId = reviewerId,
+                Status = "InProgress",
+                IsAccepted = true,
+                Content = string.Empty
+            };
+
+            // Добавляем рецензента в список и обновляем статус статьи
+            if (!article.ReviewerIds.Contains(reviewerId))
+                article.ReviewerIds.Add(reviewerId);
+            article.Status = "InProgress";
+
+            // Сохраняем изменения
+            await _context.Reviews.AddAsync(review);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeclineReview(int articleId, int reviewerId)
+        {
+            var article = await _context.Articles.FindAsync(articleId);
+            if (article == null)
+                return false;
+            article.ReviewerIds.Remove(reviewerId);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> SubmitReview(int articleId, int reviewerId, string content, string status)
+        {
+            var review = await _context.Reviews.FirstOrDefaultAsync(r => r.ArticleId == articleId && r.ReviewerId == reviewerId);
+            if (review == null)
+                return false;
+            review.Content = content;
+            review.Status = status;
+            review.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            // После обновления рецензии проверяем финальный статус статьи
+            var article = await _context.Articles.Include(a => a.Reviews).FirstOrDefaultAsync(a => a.Id == articleId);
+            if (article != null && article.Reviews != null)
+            {
+                if (article.Reviews.Any(r => r.Status == "accepted_for_publication"))
+                {
+                    article.Status = "accepted_for_publication";
+                    article.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+                else if (article.Reviews.Any(r => r.Status == "rejected"))
+                {
+                    article.Status = "rejected";
+                    article.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+            }
+            return true;
+        }
     }
 }
